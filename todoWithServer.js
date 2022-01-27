@@ -1,5 +1,6 @@
 import { callAPI } from './fetchTodos.js';
 
+// remove it
 function uuidv4() {
   return ([1e7] + -1e3 + -4e3 + -8e3 + -1e11).replace(/[018]/g, c =>
     (
@@ -38,42 +39,46 @@ class MyEventEmitter {
 class TodoService extends MyEventEmitter {
   constructor() {
     super();
+    // remove it
     this.on('LocalStorageChange', () => {
       todoApp.render();
     });
   }
 
-  addTodo(e) {
-    e.preventDefault();
-    const input = document.querySelector('#mainInput');
-    const inputText = input.value.trim();
-    if (inputText !== '') {
-      callAPI('/todos', {
-        method: 'POST',
-        body: JSON.stringify(inputText),
-        headers: {
-          'Content-Type': 'application/json; charset=UTF-8',
-        },
-      }).then(data => {
-        todoApp.render(data);
-      });
-    } else {
-      alert('Write task description please!');
-    }
+
+  //there should be method for getting todos !!!
+
+  addTodo(value) {
+    // e.preventDefault();
+    // const input = document.querySelector('#mainInput');
+    // const inputText = input.value.trim();
+    callAPI('/todos', {
+      method: 'POST',
+      body: JSON.stringify(value),
+      headers: {
+        'Content-Type': 'application/json; charset=UTF-8',
+      },
+    }).then(data => {
+      todoApp.render(data);
+    });
+    // if (inputText !== '') {
+    // } else {
+    //   alert('Write task description please!');
+    // }
 
     const form = input.closest('form');
     form.reset();
   }
 
-  deleteTodo(e) {
-    if (e.target.nodeName === 'BUTTON') {
-      const itemId = e.target.parentNode.id;
-      callAPI(`/todos/?id=${itemId}`, {
+  deleteTodo(id) {
+    // if (e.target.nodeName === 'BUTTON') {
+      // const itemId = e.target.parentNode.id;
+      callAPI(`/todos/?id=${id}`, {
         method: 'DELETE',
       }).then(data => {
         todoApp.render(data);
       });
-    }
+    // }
   }
 
   handleAllCompleted() {
@@ -82,6 +87,7 @@ class TodoService extends MyEventEmitter {
     });
   }
 
+  // move to App
   handleFilter(e) {
     switch (e.target.id) {
       case 'All':
@@ -124,6 +130,7 @@ class Form {
   createForm() {
     const form = document.createElement('form');
     form.classList.add('form');
+    // it don't have to append itself, it have to do App 
     document.body.prepend(form);
 
     const title = document.createElement('h1');
@@ -138,6 +145,7 @@ class Form {
     input.placeholder = 'What needs to be done?';
     input.classList.add('mainInput');
 
+    // should be separate "Component"
     const label = document.createElement('label');
     label.classList.add('label');
     label.setAttribute('for', 'mainInput');
@@ -195,6 +203,8 @@ class TodoItem {
     if (e.target.nodeName === 'LABEL') {
       const targetId = e.target.closest('li').id;
       const completed = e.target.closest('li').children[0].completed;
+
+      //should be in TodoService
       callAPI(`/todos/?id=${targetId}`, {
         method: 'PUT',
         body: JSON.stringify({ id: targetId, completed: !completed }),
@@ -207,6 +217,7 @@ class TodoItem {
     }
   }
 
+  //please change the name of method, maybe it should be toggleEditingMode
   handleChangeText(e) {
     if (e.target.tagName === 'P') {
       const target = e.target;
@@ -254,6 +265,8 @@ class TodoItem {
     const btn = e.target.parentNode.children[3];
     btn.classList.remove('editable');
     const newDescription = e.target.innerText;
+
+    //should be in TodoService
     callAPI(`/todos/?id=${targetId}`, {
       method: 'PUT',
       body: JSON.stringify({ id: targetId, description: newDescription }),
@@ -267,9 +280,12 @@ class TodoItem {
 class App {
   constructor() {
     this.form = new Form();
+    this.list = this.createTodoList()
   }
 
+
   start() {
+    //shoud be in TodoService
     callAPI('/todos').then(data => {
       this.createTodoList(data);
       this.createFooterForm(data);
@@ -282,19 +298,27 @@ class App {
     this.checksForRefresh(array);
   }
 
+
+  // it should only create ul layout
   createTodoList(array) {
     if (array.length !== 0) {
       const todoList = document.createElement('ul');
       todoList.addEventListener('click', todoService.deleteTodo);
       todoList.classList.add('todoList');
+
+
+      // shouldn't be form`s child
       const form = document.querySelector('form');
       form.appendChild(todoList);
-      const todos = this.listLayout(array);
-      todoList.append(...todos);
+
+      // const todos = this.listLayout(array);
+      // todoList.append(...todos);
     }
   }
 
+  // it should map todos and append it to the ul
   renderTodoList(array) {
+    //this.list.append(...todos) - example how it should look like
     const todoListRef = document.querySelector('.todoList');
     if (todoListRef) {
       todoListRef.innerHTML = '';
@@ -315,6 +339,8 @@ class App {
     return todoItems;
   }
 
+  // 1. It should be class variable (this.formFooter)
+  // 2. Move it to the separate class
   createFooterForm(array) {
     const footerDiv = document.createElement('div');
     footerDiv.classList.add('footerDiv');
@@ -354,6 +380,7 @@ class App {
     footerDiv.append(quantity, filterBtns, btnClear);
   }
 
+  //
   renderFooterForm(array) {
     const footerDivRef = document.querySelector('.footerDiv');
 
@@ -372,6 +399,8 @@ class App {
     footerDivRef.append(btnClear);
   }
 
+  // instad of using querySelector, please use class variables
+  // move items to separate "Components" (classes)
   checksForRefresh(array) {
     const footerForm = document.querySelector('.footerDiv');
     if (array.length === 0) {
@@ -406,3 +435,6 @@ class App {
 
 const todoApp = new App();
 todoApp.start();
+
+
+// Try not to use querySelector, you have class instanses
